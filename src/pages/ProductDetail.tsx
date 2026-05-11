@@ -302,11 +302,11 @@ const ProductDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-widest font-bold text-navy">Имейл</label>
-                <input type="email" className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="office@darinero.bg" />
+                <input type="email" className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="office@darinero.com" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-widest font-bold text-navy">Телефон</label>
-                <input type="tel" className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="+359 888 000 000" />
+                <input type="tel" className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="0878838211" />
               </div>
             </div>
             <div className="space-y-2">

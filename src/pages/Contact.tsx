@@ -32,7 +32,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-widest font-bold text-navy/40 mb-1">Имейл</p>
-                    <p className="text-lg">hello@darinero.studio</p>
+                    <p className="text-lg">office@darinero.com</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
@@ -41,7 +41,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-widest font-bold text-navy/40 mb-1">Телефон</p>
-                    <p className="text-lg">+359 888 000 000</p>
+                    <p className="text-lg">0878838211</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">

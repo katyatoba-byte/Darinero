@@ -36,8 +36,8 @@ const Footer = () => {
             <h4 className="font-serif text-xl mb-8">Контакт</h4>
             <ul className="space-y-4 text-white/60 font-light">
               <li>София, България</li>
-              <li>hello@darinero.studio</li>
-              <li>+359 888 000 000</li>
+              <li>office@darinero.com</li>
+              <li>0878838211</li>
             </ul>
           </div>
 
