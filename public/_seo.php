@@ -237,6 +237,9 @@ function render_route(string $path, array $c): array {
             if (!empty($cs['testimonial']['text'])) {
                 $h .= '<blockquote><p>' . e($cs['testimonial']['text']) . '</p><footer>' . e(trim(($cs['testimonial']['author'] ?? '') . ', ' . ($cs['testimonial']['company'] ?? ''), ', ')) . '</footer></blockquote>';
             }
+            $imgs = array_values(array_unique(array_filter(array_merge([$cs['image'] ?? ''], $cs['gallery'] ?? []))));
+            foreach ($imgs as $i => $src) $h .= '<figure><img src="' . e($src) . '" alt="' . e($cs['title'] . ' – снимка ' . ($i + 1)) . '" loading="lazy"></figure>';
+            if ($imgs) $page['schema'][] = ['@type' => 'ImageGallery', 'name' => $cs['title'], 'image' => array_map('abs_url', $imgs)];
             $page['html'] = $h . '<p><a href="/contact">Искате подобен резултат? Изпратете запитване</a></p></article>';
             $page['schema'][] = breadcrumbs([$home, ['Case Studies', '/case-studies'], [$cs['title'], '/case-study/' . $id]]);
             $page['schema'][] = array_filter([

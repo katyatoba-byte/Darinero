@@ -40,7 +40,7 @@ $head = '<title>' . e($page['title']) . '</title>'
     . '<meta name="twitter:card" content="' . ($image ? 'summary_large_image' : 'summary') . '">'
     . '<script type="application/ld+json">' . json_encode(['@context' => 'https://schema.org', '@graph' => $page['schema']], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . '</script>'
     . '<script>window.__DARINERO_CONTENT__=' . json_encode($content, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>'
-    . '<style>.ssr{max-width:72rem;margin:0 auto;padding:8rem 1.5rem 4rem;line-height:1.6}.ssr nav ul{display:flex;flex-wrap:wrap;gap:1rem;list-style:none;padding:0}.ssr h1{font-size:2.5rem;margin:1rem 0}.ssr h2{font-size:1.5rem;margin:2rem 0 .75rem}.ssr dt{font-weight:600}.ssr dd{margin:0 0 .5rem}</style>';
+    . '<style>.ssr{max-width:72rem;margin:0 auto;padding:8rem 1.5rem 4rem;line-height:1.6}.ssr nav ul{display:flex;flex-wrap:wrap;gap:1rem;list-style:none;padding:0}.ssr h1{font-size:2.5rem;margin:1rem 0}.ssr h2{font-size:1.5rem;margin:2rem 0 .75rem}.ssr dt{font-weight:600}.ssr dd{margin:0 0 .5rem}.ssr img{max-width:100%;height:auto}</style>';
 
 // Replace the static <title>/description/OG tags from index.html with page-specific ones.
 $html = preg_replace('#<title>.*?</title>#s', '', $template);

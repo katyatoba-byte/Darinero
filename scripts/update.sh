@@ -27,6 +27,14 @@ cd $D/repositories/Darinero || { echo "failed: no repo" > "$U/last-status"; exit
 if [ "$MODE" = "sync" ]; then
   git pull --ff-only || echo "git pull skipped (local changes or diverged)"
 fi
+# "reset": make the server copy exactly match GitHub (main), then build + publish.
+if [ "$MODE" = "reset" ]; then
+  if ! { git fetch origin main && git reset --hard origin/main; }; then
+    echo "git reset failed – live site untouched"
+    echo "failed $(date) git" > "$U/last-status"
+    exit 1
+  fi
+fi
 
 # Apply uploaded source changes from /home/darinero/staging-src, if any.
 if [ -d $D/staging-src/src ]; then

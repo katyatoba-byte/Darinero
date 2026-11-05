@@ -182,7 +182,8 @@ export default function CaseStudyDetail() {
                 >
                   <img
                     src={img}
-                    alt={`Product detail ${idx + 1}`}
+                    alt={`${cs.title} – снимка ${idx + 1}`}
+                    loading="lazy"
                     className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                     referrerPolicy="no-referrer"
                   />
