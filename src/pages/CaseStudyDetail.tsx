@@ -95,9 +95,9 @@ export default function CaseStudyDetail() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="overflow-hidden mb-24 border border-gray-100 bg-offwhite"
+            className="aspect-[4/3] md:aspect-[16/9] overflow-hidden mb-24 border border-gray-100"
           >
-            <img src={cs.image} alt={cs.title} className="w-full h-auto max-h-[80vh] object-contain mx-auto" referrerPolicy="no-referrer" />
+            <img src={cs.image} alt={cs.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           </motion.div>
         )}
 
@@ -170,7 +170,7 @@ export default function CaseStudyDetail() {
         {cs.gallery?.length > 0 && (
           <section className="mb-24">
             <h2 className="text-3xl mb-12 border-b border-gray-100 pb-4">Продукти и Детайли</h2>
-            <div className="columns-1 md:columns-2 lg:columns-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {cs.gallery.map((img: string, idx: number) => (
                 <motion.div
                   key={idx}
@@ -178,13 +178,13 @@ export default function CaseStudyDetail() {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1 }}
-                  className="mb-8 break-inside-avoid overflow-hidden border border-gray-100"
+                  className="aspect-[3/4] overflow-hidden border border-gray-100"
                 >
                   <img
                     src={img}
                     alt={`${cs.title} – снимка ${idx + 1}`}
                     loading="lazy"
-                    className="block w-full h-auto"
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
                     referrerPolicy="no-referrer"
                   />
                 </motion.div>
