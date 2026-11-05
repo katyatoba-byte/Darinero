@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { CATEGORIES } from '../constants';
+import { useContent } from '../content';
 
 const Categories = () => {
+  const { categories: CATEGORIES } = useContent();
   return (
     <main className="pt-32">
       <section className="section-padding bg-offwhite">

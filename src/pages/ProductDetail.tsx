@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Check, ChevronDown, Plus, Minus } from 'lucide-react';
-import { PRODUCTS, CATEGORIES } from '../constants';
+import { useContent } from '../content';
 import ProductCustomizer from '../components/ProductCustomizer';
 import QuickOrder from '../components/QuickOrder';
 import { Item } from '../types';
+import { submitInquiry } from '../inquiry';
 
 const ProductDetail = () => {
+  const { products: PRODUCTS, categories: CATEGORIES, settings } = useContent();
   const { id } = useParams();
   const product = PRODUCTS.find(p => p.id === id);
   const category = CATEGORIES.find(c => c.id === product?.categoryId);
@@ -15,31 +17,37 @@ const ProductDetail = () => {
   const [currentConfig, setCurrentConfig] = useState<{ items: Item[], quantity: number } | null>(null);
 
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [form, setForm] = useState({ name: '', company: '', email: '', phone: '', message: '', website: '' });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState('');
 
-  if (!product) return <div>Product not found</div>;
+  if (!product) return (
+    <div className="pt-32 pb-24 min-h-screen flex items-center justify-center text-center">
+      <div>
+        <h1 className="text-4xl mb-8">Продуктът не е намерен</h1>
+        <Link to="/categories" className="text-copper font-bold uppercase tracking-widest">Към каталога</Link>
+      </div>
+    </div>
+  );
 
-  const faqs = [
-    {
-      question: "Какво е минималното количество за поръчка?",
-      answer: "Минималното количество за поръчка на корпоративни подаръчни кутии е 10 броя. Важно е да знаете, че за добавяне на персонализация (брандиране с лого) минималното количество е 20 броя."
-    },
-    {
-      question: "Колко време отнема изработката и доставката?",
-      answer: "Стандартният срок за изработка е между 1 и 3 седмици, в зависимост от сложността на конфигурацията и натовареността на сезона. Препоръчваме ранни запитвания за коледния период."
-    },
-    {
-      question: "Мога ли да добавя собствено лого върху продуктите?",
-      answer: "Да, предлагаме пълно брандиране при поръчка на над 20 броя. Логото ви може да бъде поставено върху кутията, картичката и върху голяма част от самите продукти чрез гравиране, печат или стикери."
-    },
-    {
-      question: "Предлагате ли индивидуална доставка до адреси на служители?",
-      answer: "Да, можем да организираме логистиката директно до домовете на вашите служители или до офиси на куриер, спестявайки ви време и усилия в координацията."
-    },
-    {
-      question: "Мога ли да променя съдържанието на готова кутия?",
-      answer: "Разбира се. Всяко наше готово предложение е само отправна точка. Можем да добавим, премахнем или заменим продукти, за да отговорим точно на вашия бюджет и изисквания."
-    }
-  ];
+  const update = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm(f => ({ ...f, [key]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+    setSending(true);
+    const configuration = currentConfig
+      ? `${currentConfig.items.map(i => i.name).join(', ')} | Количество: ${currentConfig.quantity} бр.`
+      : '';
+    const res = await submitInquiry({ source: 'Продуктова страница', product: product.title, configuration, ...form });
+    setSending(false);
+    if (res.ok) { setSent(true); setForm({ name: '', company: '', email: '', phone: '', message: '', website: '' }); }
+    else setFormError(res.error || '');
+  };
+
+  const faqs = settings.generalFaqs || [];
 
   const displayProducts = PRODUCTS
     .filter(p => p.id !== product.id && p.isReadyProposal && p.categoryId === product.categoryId)
@@ -288,30 +296,38 @@ const ProductDetail = () => {
             </p>
           </div>
 
-          <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+          {sent ? (
+            <div className="p-12 bg-offwhite border border-navy/5 text-center space-y-4">
+              <h3 className="text-3xl font-serif text-navy">Благодарим ви!</h3>
+              <p className="text-charcoal font-light">Запитването е изпратено. Ще се свържем с вас до 24 часа.</p>
+              <button type="button" onClick={() => setSent(false)} className="text-copper uppercase text-xs font-bold tracking-widest hover:underline">Изпрати ново запитване</button>
+            </div>
+          ) : (
+          <form className="space-y-8" onSubmit={handleSubmit}>
+            <input type="text" name="website" value={form.website} onChange={update('website')} tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-widest font-bold text-navy">Име и фамилия</label>
-                <input type="text" className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="Константин Георгиев" />
+                <input required type="text" value={form.name} onChange={update('name')} className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="Константин Георгиев" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-widest font-bold text-navy">Компания</label>
-                <input type="text" className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="DARINERO ЕООД" />
+                <input type="text" value={form.company} onChange={update('company')} className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="Вашата компания" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-widest font-bold text-navy">Имейл</label>
-                <input type="email" className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="office@darinero.com" />
+                <input required type="email" value={form.email} onChange={update('email')} className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="name@company.bg" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-widest font-bold text-navy">Телефон</label>
-                <input type="tel" className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="0878838211" />
+                <input type="tel" value={form.phone} onChange={update('phone')} className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="08XX XXX XXX" />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs uppercase tracking-widest font-bold text-navy">Допълнителни изисквания</label>
-              <textarea rows={4} className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="Имате ли изисквания за брандиране, стил или бюджет?"></textarea>
+              <textarea rows={4} value={form.message} onChange={update('message')} className="w-full p-4 border border-navy/10 focus:border-copper outline-none transition-colors" placeholder="Имате ли изисквания за брандиране, стил или бюджет?"></textarea>
             </div>
             
             {currentConfig && (
@@ -326,10 +342,12 @@ const ProductDetail = () => {
               </div>
             )}
 
-            <button type="submit" className="btn-premium bg-navy text-white w-full py-6 hover:bg-copper">
-              Изпрати конфигурацията
+            {formError && <p className="text-sm text-red-700">{formError}</p>}
+            <button type="submit" disabled={sending} className="btn-premium bg-navy text-white w-full py-6 hover:bg-copper disabled:opacity-60">
+              {sending ? 'Изпращане…' : 'Изпрати конфигурацията'}
             </button>
           </form>
+          )}
 
           {/* How it Works - Integrated into the flow */}
           {product.id === 'christmas-employees-gifts' && (

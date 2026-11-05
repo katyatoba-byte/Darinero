@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { SERVICES } from '../constants';
+import { useContent } from '../content';
 import { Link } from 'react-router-dom';
 
 const Services = () => {
+  const { services: SERVICES } = useContent();
   return (
     <main className="pt-32">
       <section className="section-padding bg-offwhite">

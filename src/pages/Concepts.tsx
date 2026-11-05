@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { CONCEPTS } from '../constants';
+import { useContent } from '../content';
 import { Link } from 'react-router-dom';
 
 const Concepts = () => {
+  const { concepts: CONCEPTS } = useContent();
   return (
     <main className="pt-32">
       <section className="section-padding bg-white">
@@ -30,7 +31,7 @@ const Concepts = () => {
                 transition={{ delay: idx * 0.1 }}
                 className="group"
               >
-                <Link to={`/case-study/${concept.id}`} className="block aspect-[4/5] overflow-hidden mb-8 relative">
+                <Link to={concept.link || '/contact'} className="block aspect-[4/5] overflow-hidden mb-8 relative">
                   <img 
                     src={concept.image} 
                     alt={concept.title} 
@@ -42,7 +43,7 @@ const Concepts = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-copper text-[10px] font-bold uppercase tracking-[0.3em] mb-2">{concept.category}</p>
-                    <Link to={`/case-study/${concept.id}`}>
+                    <Link to={concept.link || '/contact'}>
                       <h2 className="text-3xl font-serif mb-4 hover:text-copper transition-colors">{concept.title}</h2>
                     </Link>
                     <p className="text-charcoal font-light leading-relaxed max-w-md">

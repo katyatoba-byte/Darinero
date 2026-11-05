@@ -2,10 +2,11 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Clock, Zap, Target } from 'lucide-react';
-import { CONCEPTS, PROCESS_STEPS } from '../constants';
+import { useContent } from '../content';
 import Hero from '../components/Hero';
 
 const Home = () => {
+  const { concepts: CONCEPTS, processSteps: PROCESS_STEPS } = useContent();
   return (
     <main className="overflow-hidden">
       <Hero />
@@ -188,7 +189,7 @@ const Home = () => {
               viewport={{ once: true }}
               className="group cursor-pointer"
             >
-              <Link to={`/case-study/${concept.id}`} className="block aspect-[16/10] overflow-hidden mb-8 relative border border-softgray">
+              <Link to={concept.link || '/contact'} className="block aspect-[16/10] overflow-hidden mb-8 relative border border-softgray">
                 <img 
                   src={concept.image} 
                   alt={concept.title} 
@@ -199,7 +200,7 @@ const Home = () => {
                   {concept.category}
                 </div>
               </Link>
-              <Link to={`/case-study/${concept.id}`}>
+              <Link to={concept.link || '/contact'}>
                 <h3 className="text-3xl mb-4 text-navy group-hover:text-copper transition-colors">{concept.title}</h3>
               </Link>
               <p className="text-charcoal font-light leading-relaxed max-w-xl">

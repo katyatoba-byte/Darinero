@@ -1,9 +1,10 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { CATEGORIES, PRODUCTS } from '../constants';
+import { useContent } from '../content';
 
 const CategoryDetail = () => {
+  const { categories: CATEGORIES, products: PRODUCTS } = useContent();
   const { id } = useParams();
   const category = CATEGORIES.find(c => c.id === id);
   const allProducts = PRODUCTS.filter(p => p.categoryId === id);

@@ -12,6 +12,7 @@ import Contact from './pages/Contact';
 import Categories from './pages/Categories';
 import CategoryDetail from './pages/CategoryDetail';
 import ProductDetail from './pages/ProductDetail';
+import { useContent } from './content';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -21,10 +22,41 @@ const ScrollToTop = () => {
   return null;
 };
 
+// Sets a meaningful <title> and meta description for every page.
+const PageMeta = () => {
+  const { pathname } = useLocation();
+  const { settings, categories, products, caseStudies } = useContent();
+  useEffect(() => {
+    const [, section, id] = pathname.split('/');
+    const fixed: Record<string, string> = {
+      services: 'Услуги', 'case-studies': 'Case Studies', concepts: 'Концепции',
+      about: 'За нас', contact: 'Контакт', categories: 'Каталог',
+    };
+    let page = fixed[section] || '';
+    let description = settings.siteDescription;
+    if (section === 'category') {
+      const c = categories.find(x => x.id === id);
+      if (c) { page = c.title; description = c.description || description; }
+    } else if (section === 'product') {
+      const p = products.find(x => x.id === id);
+      if (p) { page = p.title; description = p.positioning || description; }
+    } else if (section === 'case-study') {
+      const cs = caseStudies.find(x => x.id === id);
+      if (cs) { page = cs.title; description = cs.shortSummary || description; }
+    }
+    document.title = page ? `${page} | DARINERO` : settings.siteTitle;
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) { meta = document.createElement('meta'); meta.setAttribute('name', 'description'); document.head.appendChild(meta); }
+    meta.setAttribute('content', description);
+  }, [pathname, settings, categories, products, caseStudies]);
+  return null;
+};
+
 export default function App() {
   return (
     <Router>
       <ScrollToTop />
+      <PageMeta />
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex-grow">
