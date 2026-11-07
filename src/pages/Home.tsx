@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Clock, Zap, Target } from 'lucide-react';
 import { useContent } from '../content';
 import Hero from '../components/Hero';
+import SeasonalBanner from '../components/SeasonalBanner';
 
 const Home = () => {
   const { concepts: CONCEPTS, processSteps: PROCESS_STEPS } = useContent();
   return (
     <main className="overflow-hidden">
       <Hero />
+      <SeasonalBanner />
 
       {/* Problem Section */}
       <section className="section-padding bg-white">

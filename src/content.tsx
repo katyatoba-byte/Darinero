@@ -34,6 +34,47 @@ export interface SiteSettings {
   facebook?: string;
   inquiryEmail?: string;
   generalFaqs: { question: string; answer: string }[];
+  bannerEnabled?: boolean;
+  bannerText?: string;
+  bannerButton?: string;
+  bannerLink?: string;
+}
+
+export interface GiftCatalog {
+  id: string;
+  title: string;
+  occasion: string;
+  status: 'active' | 'upcoming' | 'archived' | string;
+  description?: string;
+  priceRange?: string;
+  pages?: string;
+  cover?: string;
+  pdf?: string;
+  mailchimpTag?: string;
+}
+
+export interface GiftSet {
+  name: string;
+  description?: string;
+  price?: string;
+  type?: string;
+  withLogo?: boolean;
+  hidden?: boolean;
+  image?: string;
+}
+
+export interface ThemePage {
+  id: string;
+  name: string;
+  hidden?: boolean;
+  seoTitle?: string;
+  metaDescription?: string;
+  h1?: string;
+  intro?: string;
+  deadlineEnabled?: boolean;
+  deadline?: string;
+  giftSets?: GiftSet[];
+  faqs?: { question: string; answer: string }[];
 }
 
 export interface SiteContent {
@@ -44,6 +85,8 @@ export interface SiteContent {
   services: Service[];
   processSteps: ProcessStep[];
   caseStudies: CaseStudy[];
+  catalogs: GiftCatalog[];
+  themePages: ThemePage[];
 }
 
 const DEFAULTS = defaults as unknown as SiteContent;

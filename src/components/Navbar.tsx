@@ -22,7 +22,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Начало', path: '/' },
-    { name: 'Каталог', path: '/categories' },
+    { name: 'Каталог', path: '/katalozi' },
     { name: 'КОЛЕДНИ ПОДАРЪЦИ', path: '/category/christmas-brands' },
     { name: 'Case Studies', path: '/case-studies' },
     { name: 'Концепции', path: '/concepts' },

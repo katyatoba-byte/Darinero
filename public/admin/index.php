@@ -101,7 +101,7 @@ $h = fn($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
   </header>
   <main id="app" class="app"><p class="muted">Зареждане…</p></main>
   <script>window.CSRF = <?= json_encode($csrf) ?>;</script>
-  <script src="/admin/admin.js?v=1"></script>
+  <script src="/admin/admin.js?v=2"></script>
 <?php endif; ?>
 </body>
 </html>

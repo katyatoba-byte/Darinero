@@ -83,7 +83,7 @@ function faq_schema(array $faqs): ?array {
 }
 
 function nav_html(): string {
-    $links = ['/' => 'Начало', '/categories' => 'Каталог', '/services' => 'Услуги', '/case-studies' => 'Case Studies', '/concepts' => 'Концепции', '/about' => 'За нас', '/contact' => 'Контакт'];
+    $links = ['/' => 'Начало', '/katalozi' => 'Каталог', '/categories' => 'Продукти', '/services' => 'Услуги', '/case-studies' => 'Case Studies', '/concepts' => 'Концепции', '/about' => 'За нас', '/contact' => 'Контакт'];
     $h = '<nav aria-label="Основна навигация"><ul>';
     foreach ($links as $href => $label) $h .= '<li><a href="' . e($href) . '">' . e($label) . '</a></li>';
     return $h . '</ul></nav>';
@@ -282,6 +282,29 @@ function render_route(string $path, array $c): array {
             $page['schema'][] = breadcrumbs([$home, ['За нас', '/about']]);
             break;
 
+        case 'katalozi':
+            if ($id !== '') break;
+            $active = array_values(array_filter($c['catalogs'] ?? [], fn($x) => ($x['status'] ?? '') === 'active'));
+            $page['title'] = 'Каталози с корпоративни подаръци' . $suffix;
+            $page['description'] = 'Разгледайте каталозите на Darinero с готови и персонализирани корпоративни подаръци за Коледа, 8 март, onboarding и бизнес партньори.';
+            $h = '<h1>Каталози с корпоративни подаръци</h1><p>Разгледайте готовите ни предложения или ни разкажете какъв подарък търсите. Ще подготвим решение според вашия бюджет, повод и количество — с вашето лого или без него.</p><ul>';
+            foreach ($active as $cat) {
+                $h .= '<li><h2>' . e($cat['title'] ?? '') . '</h2><p>' . e($cat['description'] ?? '') . '</p>'
+                    . (!empty($cat['priceRange']) ? '<p>Цени: ' . e($cat['priceRange']) . '</p>' : '')
+                    . (!empty($cat['occasion']) ? '<p><a href="/' . e($cat['occasion']) . '">Вижте комплектите</a></p>' : '') . '</li>';
+            }
+            $page['html'] = $h . '</ul><p><a href="/contact">Поискайте оферта</a></p>';
+            if (!empty($active[0]['cover'])) $page['image'] = abs_url($active[0]['cover']);
+            $page['schema'][] = breadcrumbs([$home, ['Каталози', '/katalozi']]);
+            break;
+
+        case 'politika-za-poveritelnost':
+            if ($id !== '') break;
+            $page['title'] = 'Политика за поверителност' . $suffix;
+            $page['description'] = 'Как Даринеро ООД събира и използва личните данни от формите за каталог и запитване.';
+            $page['html'] = '<h1>Политика за поверителност</h1><p>Администратор на личните данни е Даринеро ООД, ' . e($s['address'] ?? '') . ', ' . e($s['email'] ?? '') . '. Събираме име, фирма, служебен имейл и телефон, за да изпратим каталог и оферта, а при съгласие – и предложения по имейл чрез Mailchimp. Имате право на достъп, корекция и изтриване на данните.</p>';
+            break;
+
         case 'contact':
             $page['title'] = 'Контакт – запитване за корпоративни подаръци' . $suffix;
             $page['description'] = 'Свържете се с DARINERO за корпоративни подаръци: ' . ($s['email'] ?? '') . ', ' . ($s['phone'] ?? '') . '. Отговаряме до 24 часа.';
@@ -289,6 +312,38 @@ function render_route(string $path, array $c): array {
             $page['schema'][] = breadcrumbs([$home, ['Контакт', '/contact']]);
             $page['schema'][] = ['@type' => 'ContactPage', 'url' => SITE_URL . '/contact', 'about' => ['@id' => SITE_URL . '/#organization']];
             break;
+    }
+
+    if ($page['html'] === '' && $id === '' && $section !== '') {
+        $tp = by_id($c['themePages'] ?? [], $section);
+        if ($tp && empty($tp['hidden'])) {
+            $page['title'] = ($tp['seoTitle'] ?? '') !== '' ? $tp['seoTitle'] . $suffix : ($tp['name'] ?? '') . $suffix;
+            $page['description'] = trim_text((string) ($tp['metaDescription'] ?? $tp['intro'] ?? ''));
+            $h = '<h1>' . e($tp['h1'] ?? $tp['name'] ?? '') . '</h1>' . rich_text((string) ($tp['intro'] ?? ''));
+            if (!empty($tp['deadlineEnabled']) && !empty($tp['deadline'])) $h .= '<p><strong>' . e($tp['deadline']) . '</strong></p>';
+            $sets = array_values(array_filter($tp['giftSets'] ?? [], fn($g) => empty($g['hidden']) && !empty($g['name'])));
+            if ($sets) {
+                $h .= '<h2>Акцентни комплекти</h2><ul>';
+                foreach ($sets as $g) $h .= '<li><h3>' . e($g['name']) . '</h3><p>' . e($g['description'] ?? '') . '</p>' . (!empty($g['price']) ? '<p>Цена: ' . e($g['price']) . ' без ДДС</p>' : '') . '</li>';
+                $h .= '</ul>';
+                if (!empty($sets[0]['image'])) $page['image'] = abs_url($sets[0]['image']);
+            }
+            $cats = array_values(array_filter($c['catalogs'] ?? [], fn($x) => ($x['status'] ?? '') === 'active' && ($x['occasion'] ?? '') === $section));
+            if ($cats) {
+                $h .= '<h2>Каталози</h2><ul>';
+                foreach ($cats as $cat) $h .= '<li>' . e($cat['title'] ?? '') . ' – ' . e($cat['description'] ?? '') . (!empty($cat['priceRange']) ? ' (' . e($cat['priceRange']) . ')' : '') . '</li>';
+                $h .= '</ul>';
+            }
+            $h .= '<h2>Как работим</h2><ol><li>Изберете – готов комплект от каталога или ни кажете бюджета и повода.</li><li>Персонализираме – лого върху картичка, играчка, таг, бандерол или цялата кутия.</li><li>Доставяме – до вашия офис или до всеки получател в страната.</li></ol>';
+            $faqs = array_values(array_filter($tp['faqs'] ?? [], fn($f) => !empty($f['question']) && !empty($f['answer'])));
+            if ($faqs) {
+                $h .= '<h2>Често задавани въпроси</h2>';
+                foreach ($faqs as $f) $h .= '<h3>' . e($f['question']) . '</h3><p>' . e($f['answer']) . '</p>';
+                if ($fq = faq_schema($faqs)) $page['schema'][] = $fq;
+            }
+            $page['html'] = $h . '<p><a href="/katalozi">Всички каталози</a> · <a href="/contact">Поискайте оферта</a></p>';
+            $page['schema'][] = breadcrumbs([$home, ['Каталози', '/katalozi'], [$tp['name'] ?? $section, '/' . $section]]);
+        }
     }
 
     if ($page['html'] === '') {
@@ -303,7 +358,8 @@ function render_route(string $path, array $c): array {
 }
 
 function site_urls(array $c): array {
-    $urls = ['/', '/categories', '/services', '/case-studies', '/concepts', '/about', '/contact'];
+    $urls = ['/', '/katalozi', '/categories', '/services', '/case-studies', '/concepts', '/about', '/contact', '/politika-za-poveritelnost'];
+    foreach ($c['themePages'] ?? [] as $x) if (!empty($x['id']) && empty($x['hidden'])) $urls[] = '/' . $x['id'];
     foreach ($c['categories'] ?? [] as $x) $urls[] = '/category/' . $x['id'];
     foreach ($c['products'] ?? [] as $x) $urls[] = '/product/' . $x['id'];
     foreach ($c['caseStudies'] ?? [] as $x) $urls[] = '/case-study/' . $x['id'];

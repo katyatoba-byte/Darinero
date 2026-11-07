@@ -63,6 +63,82 @@ switch ($action) {
         @chmod($dest, 0640);
         json_response(['ok' => true, 'url' => '/api/img.php?f=' . $name]);
 
+    case 'upload-pdf':
+        $f = $_FILES['file'] ?? null;
+        if (!$f || $f['error'] !== UPLOAD_ERR_OK) json_response(['ok' => false, 'error' => 'Файлът не беше качен (възможно е да е над лимита на сървъра).'], 400);
+        if ($f['size'] > 25 * 1024 * 1024) json_response(['ok' => false, 'error' => 'Файлът е над 25 MB.'], 400);
+        $head = (string) file_get_contents($f['tmp_name'], false, null, 0, 5);
+        if ($head !== '%PDF-') json_response(['ok' => false, 'error' => 'Позволени са само PDF файлове.'], 400);
+        $base = preg_replace('/[^a-z0-9]+/', '-', strtolower(pathinfo((string) $f['name'], PATHINFO_FILENAME))) ?: 'katalog';
+        $base = trim(substr($base, 0, 60), '-') ?: 'katalog';
+        $name = $base . '-' . bin2hex(random_bytes(4)) . '.pdf';
+        if (!move_uploaded_file($f['tmp_name'], UPLOAD_DIR . '/' . $name)) json_response(['ok' => false, 'error' => 'Неуспешен запис на файла.'], 500);
+        @chmod(UPLOAD_DIR . '/' . $name, 0640);
+        json_response(['ok' => true, 'url' => '/api/file.php?f=' . $name]);
+
+    case 'downloads':
+        json_response(['ok' => true, 'downloads' => read_json_file(DATA_DIR . '/downloads.json', [])]);
+
+    case 'download-retry':
+        $input = json_decode(file_get_contents('php://input') ?: '', true);
+        $id = (string) ($input['id'] ?? '');
+        $file = DATA_DIR . '/downloads.json';
+        $list = read_json_file($file, []);
+        $result = 'skipped';
+        foreach ($list as &$d) {
+            if (($d['id'] ?? '') !== $id) continue;
+            if (empty($d['consent'])) json_response(['ok' => false, 'error' => 'Без съгласие контактът не се изпраща в Mailchimp.'], 400);
+            $result = mailchimp_sync((string) $d['email'], (string) ($d['name'] ?? ''), (string) ($d['company'] ?? ''), $d['tags'] ?? [], true);
+            $d['mailchimp'] = $result;
+        }
+        unset($d);
+        write_json_file($file, $list);
+        if ($result !== 'sent') json_response(['ok' => false, 'error' => $result === 'skipped' ? 'Mailchimp не е настроен.' : 'Mailchimp върна грешка.'], 400);
+        json_response(['ok' => true]);
+
+    case 'mailchimp-get':
+        $cfg = read_json_file(DATA_DIR . '/mailchimp.json', []);
+        $key = (string) ($cfg['apiKey'] ?? '');
+        json_response(['ok' => true, 'listId' => (string) ($cfg['listId'] ?? ''), 'hasKey' => $key !== '', 'keyHint' => $key !== '' ? '…' . substr($key, -8) : '']);
+
+    case 'mailchimp-save':
+        $input = json_decode(file_get_contents('php://input') ?: '', true);
+        $cfg = read_json_file(DATA_DIR . '/mailchimp.json', []);
+        $key = trim((string) ($input['apiKey'] ?? ''));
+        if ($key !== '') {
+            if (!preg_match('/^[a-f0-9]{20,40}-[a-z]+[0-9]+$/', $key)) json_response(['ok' => false, 'error' => 'Ключът изглежда невалиден (трябва да завършва на нещо като -us21).'], 400);
+            $cfg['apiKey'] = $key;
+        }
+        $cfg['listId'] = preg_replace('/[^a-z0-9]/i', '', (string) ($input['listId'] ?? ''));
+        write_json_file(DATA_DIR . '/mailchimp.json', $cfg);
+        json_response(['ok' => true]);
+
+    case 'mailchimp-test':
+        $cfg = mailchimp_config();
+        if (!$cfg) json_response(['ok' => false, 'error' => 'Въведете API ключ и ID на аудиторията.'], 400);
+        $r = mailchimp_request($cfg, 'GET', '/lists/' . rawurlencode((string) $cfg['listId']) . '?fields=name,stats.member_count');
+        if ($r['code'] !== 200) json_response(['ok' => false, 'error' => 'Mailchimp: ' . ($r['data']['detail'] ?? ('грешка ' . $r['code']))], 400);
+        json_response(['ok' => true, 'name' => $r['data']['name'] ?? '', 'members' => $r['data']['stats']['member_count'] ?? 0]);
+
+    case 'inquiry-status':
+        $input = json_decode(file_get_contents('php://input') ?: '', true);
+        $id = (string) ($input['id'] ?? '');
+        $allowed = ['Ново', 'Изпратена оферта', 'Поръчка', 'Отказ', 'Спам'];
+        $file = DATA_DIR . '/inquiries.json';
+        $list = read_json_file($file, []);
+        foreach ($list as &$item) {
+            if (($item['id'] ?? '') !== $id) continue;
+            if (isset($input['status']) && in_array($input['status'], $allowed, true)) {
+                $item['status'] = $input['status'];
+                $item['handled'] = $input['status'] !== 'Ново';
+            }
+            if (array_key_exists('note', $input)) $item['note'] = clean_text($input['note'], 2000);
+            if (array_key_exists('value', $input)) $item['value'] = clean_text($input['value'], 20);
+        }
+        unset($item);
+        write_json_file($file, $list);
+        json_response(['ok' => true]);
+
     case 'inquiries':
         json_response(['ok' => true, 'inquiries' => read_json_file(DATA_DIR . '/inquiries.json', [])]);
 

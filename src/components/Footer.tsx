@@ -89,6 +89,7 @@ const Footer = () => {
 
         <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-xs text-white/40 tracking-widest uppercase">
           <p>© {new Date().getFullYear()} Даринеро ООД. Всички права запазени.</p>
+          <Link to="/politika-za-poveritelnost" className="mt-4 md:mt-0 hover:text-copper transition-colors">Политика за поверителност</Link>
         </div>
       </div>
     </footer>

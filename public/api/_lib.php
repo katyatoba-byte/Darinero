@@ -55,9 +55,107 @@ function write_json_file(string $path, $data): bool {
 }
 
 function load_content(): array {
+    $defaults = read_json_file(DEFAULT_CONTENT, []);
     $content = read_json_file(DATA_DIR . '/content.json');
-    if (is_array($content)) return $content;
-    return read_json_file(DEFAULT_CONTENT, []);
+    if (!is_array($content)) return $defaults;
+    // Sections added after the content was first saved (e.g. catalogs) come from the defaults.
+    foreach ($defaults as $key => $value) {
+        if (!array_key_exists($key, $content)) $content[$key] = $value;
+    }
+    if (isset($defaults['settings']) && is_array($content['settings'] ?? null)) {
+        $content['settings'] += $defaults['settings'];
+    }
+    return $content;
+}
+
+// Appends a record to a JSON list file (newest first), safely under a lock.
+function append_json_list(string $file, array $record, int $max = 5000): void {
+    $fh = fopen($file, 'c+');
+    if (!$fh) return;
+    flock($fh, LOCK_EX);
+    $list = json_decode(stream_get_contents($fh) ?: '[]', true) ?: [];
+    array_unshift($list, $record);
+    $list = array_slice($list, 0, $max);
+    ftruncate($fh, 0);
+    rewind($fh);
+    fwrite($fh, json_encode($list, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+    flock($fh, LOCK_UN);
+    fclose($fh);
+    @chmod($file, 0640);
+}
+
+// ---------- Mailchimp (settings live in darinero-data/mailchimp.json, never in public content) ----------
+
+function mailchimp_config(): ?array {
+    $cfg = read_json_file(DATA_DIR . '/mailchimp.json');
+    if (!is_array($cfg) || empty($cfg['apiKey']) || empty($cfg['listId'])) return null;
+    if (!preg_match('/-([a-z]+[0-9]+)$/', (string) $cfg['apiKey'], $m)) return null;
+    $cfg['dc'] = $m[1];
+    return $cfg;
+}
+
+function mailchimp_request(array $cfg, string $method, string $path, ?array $body = null): array {
+    if (!function_exists('curl_init')) return ['code' => 0, 'data' => ['detail' => 'PHP curl is not available']];
+    $ch = curl_init('https://' . $cfg['dc'] . '.api.mailchimp.com/3.0' . $path);
+    curl_setopt_array($ch, [
+        CURLOPT_CUSTOMREQUEST => $method,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 8,
+        CURLOPT_USERPWD => 'darinero:' . $cfg['apiKey'],
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+    ]);
+    if ($body !== null) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body, JSON_UNESCAPED_UNICODE));
+    $raw = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return ['code' => $code, 'data' => is_string($raw) ? (json_decode($raw, true) ?: []) : []];
+}
+
+/**
+ * Adds/updates a subscriber (only when $subscribe is true) and adds tags.
+ * When $subscribe is false, tags are added only if the contact already exists.
+ * Returns 'sent', 'skipped' (no config / not a contact) or 'error'.
+ */
+function mailchimp_sync(string $email, string $name, string $company, array $tags, bool $subscribe): string {
+    $cfg = mailchimp_config();
+    if (!$cfg) return 'skipped';
+    $hash = md5(strtolower(trim($email)));
+    $base = '/lists/' . rawurlencode((string) $cfg['listId']) . '/members/' . $hash;
+    if ($subscribe) {
+        $r = mailchimp_request($cfg, 'PUT', $base, [
+            'email_address' => $email,
+            'status_if_new' => 'subscribed',
+            'merge_fields' => array_filter(['FNAME' => $name, 'COMPANY' => $company], 'strlen'),
+        ]);
+        if ($r['code'] === 400 && str_contains(json_encode($r['data']), 'merge')) {
+            // The audience has no COMPANY field – retry with the name only.
+            $r = mailchimp_request($cfg, 'PUT', $base, ['email_address' => $email, 'status_if_new' => 'subscribed', 'merge_fields' => array_filter(['FNAME' => $name], 'strlen')]);
+        }
+        if ($r['code'] < 200 || $r['code'] >= 300) return 'error';
+    } else {
+        $r = mailchimp_request($cfg, 'GET', $base . '?fields=id');
+        if ($r['code'] === 404) return 'skipped';
+        if ($r['code'] < 200 || $r['code'] >= 300) return 'error';
+    }
+    $tags = array_values(array_unique(array_filter(array_map(fn($t) => mb_substr(trim((string) $t), 0, 100), $tags), 'strlen')));
+    if ($tags) {
+        $r = mailchimp_request($cfg, 'POST', $base . '/tags', ['tags' => array_map(fn($t) => ['name' => $t, 'status' => 'active'], $tags)]);
+        if ($r['code'] < 200 || $r['code'] >= 300) return 'error';
+    }
+    return 'sent';
+}
+
+function send_plain_mail(string $to, string $subject, string $body, string $replyTo = ''): bool {
+    $host = preg_replace('/^www\./', '', $_SERVER['HTTP_HOST'] ?? 'darinero.com');
+    if (!preg_match('/^[a-z0-9.-]+$/i', (string) $host)) $host = 'darinero.com';
+    $headers = [
+        'From: =?UTF-8?B?' . base64_encode('DARINERO') . '?= <noreply@' . $host . '>',
+        'MIME-Version: 1.0',
+        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Transfer-Encoding: 8bit',
+    ];
+    if ($replyTo !== '') $headers[] = 'Reply-To: ' . $replyTo;
+    return @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, implode("\r\n", $headers), '-f noreply@' . $host);
 }
 
 function client_ip(): string {

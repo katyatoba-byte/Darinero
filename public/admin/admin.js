@@ -112,6 +112,39 @@
       { key: 'value', label: 'Стойност за клиента', type: 'text' },
       { key: 'budget', label: 'Бюджет', type: 'text' },
     ]},
+    catalogs: { label: 'Каталози (PDF)', titleKey: 'title', fields: [
+      { key: 'id', label: 'ID', type: 'id', from: 'title' },
+      { key: 'title', label: 'Заглавие', type: 'text' },
+      { key: 'status', label: 'Статус', type: 'select', half: true, options: [['active', 'Активен – вижда се на сайта'], ['upcoming', 'Предстоящ – подготвен, още не се вижда'], ['archived', 'Архивиран – скрит']] },
+      { key: 'occasion', label: 'Повод (тематична страница)', type: 'themePage', half: true },
+      { key: 'description', label: 'Кратко описание (1–2 изречения)', type: 'textarea', rows: 2 },
+      { key: 'priceRange', label: 'Ценови диапазон (напр. 3–39 € без ДДС)', type: 'text', half: true },
+      { key: 'pages', label: 'Брой страници', type: 'text', half: true },
+      { key: 'cover', label: 'Корица', type: 'image' },
+      { key: 'pdf', label: 'PDF файл', type: 'pdf' },
+      { key: 'mailchimpTag', label: 'Етикет в Mailchimp (напр. katalog-koleda)', type: 'text' },
+    ]},
+    themePages: { label: 'Тематични страници (поводи)', titleKey: 'name', fields: [
+      { key: 'id', label: 'Адрес на страницата (напр. koledni-podaraci → darinero.com/koledni-podaraci)', type: 'id', from: 'name' },
+      { key: 'name', label: 'Повод (кратко име, напр. Коледа)', type: 'text', half: true },
+      { key: 'hidden', label: 'Скрита страница', type: 'bool', half: true },
+      { key: 'seoTitle', label: 'Заглавие за Google', type: 'text' },
+      { key: 'metaDescription', label: 'Описание за Google (до ~160 символа)', type: 'textarea', rows: 2 },
+      { key: 'h1', label: 'Главно заглавие на страницата', type: 'text' },
+      { key: 'intro', label: 'Уводен текст', type: 'textarea', rows: 4 },
+      { key: 'deadlineEnabled', label: 'Показвай лентата „Краен срок“', type: 'bool' },
+      { key: 'deadline', label: 'Текст на лентата „Краен срок“', type: 'textarea', rows: 2 },
+      { key: 'giftSets', label: 'Акцентни комплекти', type: 'array', titleKey: 'name', fields: [
+        { key: 'name', label: 'Име', type: 'text' },
+        { key: 'description', label: 'Съдържание / описание', type: 'textarea', rows: 2 },
+        { key: 'price', label: 'Цена без ДДС (напр. 15 € или от 10 €)', type: 'text', half: true },
+        { key: 'type', label: 'Тип', type: 'select', half: true, options: [['Готов комплект', 'Готов комплект'], ['Артикул за ваш комплект', 'Артикул за ваш комплект']] },
+        { key: 'withLogo', label: 'С вашето лого', type: 'bool', half: true },
+        { key: 'hidden', label: 'Изчерпан / скрит', type: 'bool', half: true },
+        { key: 'image', label: 'Снимка', type: 'image' } ] },
+      { key: 'faqs', label: 'Често задавани въпроси', type: 'array', titleKey: 'question', fields: [
+        { key: 'question', label: 'Въпрос', type: 'text' }, { key: 'answer', label: 'Отговор', type: 'textarea' } ] },
+    ]},
     processSteps: { label: 'Стъпки на процеса (начална страница)', titleKey: 'title', fields: [
       { key: 'number', label: 'Номер', type: 'text', half: true },
       { key: 'title', label: 'Заглавие', type: 'text', half: true },
@@ -129,14 +162,19 @@
     { key: 'instagram', label: 'Instagram линк (празно = скрит)', type: 'text' },
     { key: 'facebook', label: 'Facebook линк (празно = скрит)', type: 'text' },
     { key: 'linkedin', label: 'LinkedIn линк (празно = скрит)', type: 'text' },
+    { key: 'bannerEnabled', label: 'Показвай сезонния банер на началната страница', type: 'bool' },
+    { key: 'bannerText', label: 'Текст на банера', type: 'text' },
+    { key: 'bannerButton', label: 'Текст на бутона в банера', type: 'text', half: true },
+    { key: 'bannerLink', label: 'Линк на бутона (напр. /koledni-podaraci)', type: 'text', half: true },
     { key: 'generalFaqs', label: 'Общи въпроси (показват се на всяка продуктова страница)', type: 'array', titleKey: 'question', fields: [
       { key: 'question', label: 'Въпрос', type: 'text' }, { key: 'answer', label: 'Отговор', type: 'textarea' } ] },
   ];
 
   const TABS = [
-    ['inquiries', 'Запитвания'], ['products', 'Продукти'], ['categories', 'Категории'],
+    ['inquiries', 'Запитвания'], ['downloads', 'Изтеглени каталози'], ['catalogs', 'Каталози'], ['themePages', 'Тематични страници'],
+    ['products', 'Продукти'], ['categories', 'Категории'],
     ['caseStudies', 'Case Studies'], ['concepts', 'Концепции'], ['services', 'Услуги'],
-    ['processSteps', 'Процес'], ['settings', 'Настройки'], ['tools', 'Версии и парола'],
+    ['processSteps', 'Процес'], ['settings', 'Настройки'], ['tools', 'Mailchimp, версии и парола'],
   ];
 
   // ---------- state ----------
@@ -238,6 +276,38 @@
       case 'image':
         wrap.append(imageInput(val, v => { set(v); }));
         break;
+      case 'select': {
+        const sel = el('select', { onchange: e => set(e.target.value) },
+          def.options.map(([v, l]) => el('option', { value: v, selected: v === val }, l)));
+        if (!def.options.some(([v]) => v === val)) { sel.prepend(el('option', { value: '', selected: true }, '— изберете —')); }
+        wrap.append(sel);
+        break;
+      }
+      case 'themePage': {
+        const pages = content.themePages || [];
+        const sel = el('select', { onchange: e => set(e.target.value) },
+          pages.map(p => el('option', { value: p.id, selected: p.id === val }, p.name || p.id)));
+        if (!pages.some(p => p.id === val)) sel.prepend(el('option', { value: '', selected: true }, '— изберете —'));
+        wrap.append(sel);
+        break;
+      }
+      case 'pdf': {
+        const input = el('input', { value: val || '', placeholder: 'Адрес на PDF или качете файл', onchange: e => set(e.target.value.trim()) });
+        const link = el('a', { href: val || '#', target: '_blank', rel: 'noopener', class: 'muted' }, val ? 'Отвори текущия PDF' : '');
+        const file = el('input', { type: 'file', accept: 'application/pdf', hidden: true });
+        const btn = el('button', { type: 'button', class: 'ghost sm', onclick: () => file.click() }, 'Качи PDF');
+        file.addEventListener('change', async () => {
+          if (!file.files[0]) return;
+          const fd = new FormData(); fd.append('file', file.files[0]);
+          btn.textContent = 'Качване…'; btn.disabled = true;
+          try { const r = await api('upload-pdf', fd, true); input.value = r.url; set(r.url); link.href = r.url; link.textContent = 'Отвори текущия PDF'; alertBox('PDF файлът е качен. Натиснете „Запази промените“.', 'ok'); }
+          catch (err) { alertBox(err.message); }
+          finally { btn.textContent = 'Качи PDF'; btn.disabled = false; file.value = ''; }
+        });
+        wrap.append(el('div', { class: 'image-controls' }, input, el('span', {}, btn, file), link),
+          el('small', { class: 'muted' }, 'При смяна на файла адресът на страницата с каталога остава същият.'));
+        break;
+      }
       case 'images': {
         const list = Array.isArray(val) ? val : (obj[def.key] = []);
         const box = el('div', { class: 'images' });
@@ -391,6 +461,7 @@
   function render() {
     renderTabs();
     if (current === 'inquiries') return renderInquiries();
+    if (current === 'downloads') return renderDownloads();
     if (current === 'settings') {
       const grid = el('div', { class: 'grid' });
       SETTINGS.forEach(f => grid.append(field(f, content.settings)));
@@ -416,24 +487,86 @@
     try { list = (await api('inquiries')).inquiries; } catch (err) { app.append(el('p', { class: 'error' }, err.message)); return; }
     if (current !== 'inquiries') return;
     const open = list.filter(i => !i.handled).length;
-    const labels = { source: 'Източник', company: 'Компания', email: 'Имейл', phone: 'Телефон', employees: 'Брой служители', occasion: 'Повод', budget: 'Бюджет', product: 'Продукт', configuration: 'Конфигурация', message: 'Съобщение', page: 'Страница' };
+    const labels = { source: 'Източник', company: 'Компания', email: 'Имейл', phone: 'Телефон', employees: 'Брой служители', occasion: 'Повод', quantity: 'Брой подаръци', budget: 'Бюджет', deliveryDate: 'Дата за доставка', lookingFor: 'Какво търсят', catalog: 'Каталог', product: 'Продукт', configuration: 'Конфигурация', message: 'Съобщение', page: 'Страница', utm_source: 'UTM източник', utm_campaign: 'UTM кампания' };
+    const STATUSES = ['Ново', 'Изпратена оферта', 'Поръчка', 'Отказ', 'Спам'];
+    const statusOf = q => q.status || (q.handled ? 'Изпратена оферта' : 'Ново');
+    const csv = () => {
+      const cols = ['date', 'status', 'name', ...Object.keys(labels), 'value', 'note'];
+      const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const rows = [cols.map(c => esc(labels[c] || ({ date: 'Дата', status: 'Статус', name: 'Име', value: 'Стойност (€)', note: 'Бележка' })[c])).join(',')]
+        .concat(list.map(q => cols.map(c => esc(c === 'status' ? statusOf(q) : c === 'date' ? new Date(q.date).toLocaleString('bg-BG') : q[c])).join(',')));
+      const a = el('a', { href: URL.createObjectURL(new Blob(['\ufeff' + rows.join('\n')], { type: 'text/csv;charset=utf-8' })), download: 'zapitvania-darinero.csv' });
+      document.body.append(a); a.click(); a.remove();
+    };
     app.replaceChildren(
-      el('div', { class: 'section-head' }, el('h2', {}, 'Запитвания'), el('span', { class: 'muted' }, `${list.length} общо, ${open} необработени`)),
+      el('div', { class: 'section-head' }, el('h2', {}, 'Запитвания'), el('span', { class: 'muted' }, `${list.length} общо, ${open} необработени`),
+        list.length ? el('button', { type: 'button', class: 'ghost sm', onclick: csv }, 'Експорт CSV') : null),
       list.length ? el('div', { class: 'inquiries' }, list.map(q => {
         const card = el('div', { class: 'inquiry' + (q.handled ? ' handled' : '') });
-        const toggle = el('label', { class: 'checkbox' }, el('input', { type: 'checkbox', checked: !!q.handled, onchange: async e => {
-          try { await api('inquiry-handled', { id: q.id, handled: e.target.checked }); q.handled = e.target.checked; card.classList.toggle('handled', q.handled); }
-          catch (err) { alertBox(err.message); e.target.checked = !e.target.checked; }
-        } }), 'Обработено');
+        const toggle = el('select', { onchange: async e => {
+          const st = e.target.value;
+          try { await api('inquiry-status', { id: q.id, status: st }); q.status = st; q.handled = st !== 'Ново'; card.classList.toggle('handled', q.handled); }
+          catch (err) { alertBox(err.message); e.target.value = statusOf(q); }
+        } }, STATUSES.map(st => el('option', { value: st, selected: st === statusOf(q) }, st)));
+        const extra = el('div', { class: 'grid nested' },
+          el('div', { class: 'field half' }, el('label', {}, 'Стойност на поръчката (€)'), el('input', { value: q.value || '', onchange: async e => { try { await api('inquiry-status', { id: q.id, value: e.target.value }); q.value = e.target.value; } catch (err) { alertBox(err.message); } } })),
+          el('div', { class: 'field half' }, el('label', {}, 'Бележка'), el('input', { value: q.note || '', onchange: async e => { try { await api('inquiry-status', { id: q.id, note: e.target.value }); q.note = e.target.value; } catch (err) { alertBox(err.message); } } })));
         card.append(
           el('div', { class: 'inquiry-head' },
             el('strong', {}, q.name || q.email), el('span', { class: 'muted' }, new Date(q.date).toLocaleString('bg-BG')), toggle),
           el('dl', {}, Object.entries(labels).filter(([k]) => q[k]).map(([k, l]) => [
             el('dt', {}, l),
             el('dd', {}, k === 'email' ? el('a', { href: 'mailto:' + q.email }, q.email) : k === 'phone' ? el('a', { href: 'tel:' + q.phone }, q.phone) : q[k]),
-          ])));
+          ])), extra);
         return card;
       })) : el('p', { class: 'muted' }, 'Все още няма запитвания от новите форми.'));
+  }
+
+  async function renderDownloads() {
+    app.replaceChildren(el('h2', {}, 'Изтеглени каталози'), el('p', { class: 'muted' }, 'Зареждане…'));
+    let list = [];
+    try { list = (await api('downloads')).downloads; } catch (err) { app.append(el('p', { class: 'error' }, err.message)); return; }
+    if (current !== 'downloads') return;
+    const MC = { sent: 'изпратен в Mailchimp', 'no-consent': 'без съгласие', skipped: 'Mailchimp не е настроен / не е контакт', error: 'грешка' };
+    const counts = {};
+    list.forEach(d => { counts[d.catalog] = (counts[d.catalog] || 0) + 1; });
+    const csv = () => {
+      const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const rows = [['Дата', 'Каталог', 'Име', 'Фирма', 'Имейл', 'Съгласие', 'Mailchimp', 'Страница', 'UTM източник', 'UTM кампания'].map(esc).join(',')]
+        .concat(list.map(d => [new Date(d.date).toLocaleString('bg-BG'), d.catalog, d.name, d.company, d.email, d.consent ? 'да' : 'не', MC[d.mailchimp] || d.mailchimp, d.page, d.utm_source, d.utm_campaign].map(esc).join(',')));
+      const a = el('a', { href: URL.createObjectURL(new Blob(['\ufeff' + rows.join('\n')], { type: 'text/csv;charset=utf-8' })), download: 'izteglyania-katalozi.csv' });
+      document.body.append(a); a.click(); a.remove();
+    };
+    app.replaceChildren(
+      el('div', { class: 'section-head' }, el('h2', {}, 'Изтеглени каталози'), el('span', { class: 'muted' }, `${list.length} изтегляния`),
+        list.length ? el('button', { type: 'button', class: 'ghost sm', onclick: csv }, 'Експорт CSV') : null),
+      Object.keys(counts).length ? el('p', { class: 'muted' }, Object.entries(counts).map(([k, v]) => `${k}: ${v}`).join(' · ')) : null,
+      list.length ? el('div', { class: 'inquiries' }, list.map(d => el('div', { class: 'inquiry' },
+        el('div', { class: 'inquiry-head' }, el('strong', {}, (d.name || d.email) + (d.company ? ' – ' + d.company : '')), el('span', { class: 'muted' }, new Date(d.date).toLocaleString('bg-BG')),
+          d.mailchimp === 'error' && d.consent ? el('button', { type: 'button', class: 'ghost sm', onclick: async e => {
+            try { await api('download-retry', { id: d.id }); d.mailchimp = 'sent'; e.target.replaceWith(el('span', { class: 'ok' }, 'изпратен')); }
+            catch (err) { alertBox(err.message); }
+          } }, 'Изпрати пак в Mailchimp') : null),
+        el('dl', {},
+          el('dt', {}, 'Каталог'), el('dd', {}, d.catalog || ''),
+          el('dt', {}, 'Имейл'), el('dd', {}, el('a', { href: 'mailto:' + d.email }, d.email)),
+          el('dt', {}, 'Mailchimp'), el('dd', {}, MC[d.mailchimp] || d.mailchimp || ''),
+          d.utm_source ? [el('dt', {}, 'Източник'), el('dd', {}, [d.utm_source, d.utm_medium, d.utm_campaign].filter(Boolean).join(' / '))] : null)))) : el('p', { class: 'muted' }, 'Все още няма изтегляния.'));
+  }
+
+  async function renderMailchimp(box) {
+    let info = { listId: '', hasKey: false, keyHint: '' };
+    try { info = await api('mailchimp-get'); } catch (err) { box.append(el('p', { class: 'error' }, err.message)); return; }
+    const form = { apiKey: '', listId: info.listId };
+    const result = el('p', { class: 'muted' }, info.hasKey ? 'Ключът е въведен (' + info.keyHint + ').' : 'Още няма въведен ключ – контактите не се изпращат в Mailchimp.');
+    box.replaceChildren(
+      el('div', { class: 'field half' }, el('label', {}, 'Mailchimp API ключ' + (info.hasKey ? ' (празно = без промяна)' : '')), el('input', { type: 'password', autocomplete: 'off', oninput: e => { form.apiKey = e.target.value.trim(); } })),
+      el('div', { class: 'field half' }, el('label', {}, 'ID на аудиторията (Audience ID)'), el('input', { value: info.listId, oninput: e => { form.listId = e.target.value.trim(); } })),
+      el('div', { class: 'field' },
+        el('button', { type: 'button', class: 'secondary', onclick: async () => { try { await api('mailchimp-save', form); alertBox('Mailchimp настройките са запазени.', 'ok'); renderMailchimp(box); } catch (err) { alertBox(err.message); } } }, 'Запази'),
+        ' ',
+        el('button', { type: 'button', class: 'ghost sm', onclick: async () => { try { const r = await api('mailchimp-test'); result.textContent = `Връзката работи: аудитория „${r.name}“, ${r.members} контакта.`; result.className = 'ok'; } catch (err) { result.textContent = err.message; result.className = 'error'; } } }, 'Тествай връзката')),
+      result);
   }
 
   async function renderTools() {
@@ -449,11 +582,16 @@
       el('div', { class: 'field' }, el('button', { class: 'secondary' }, 'Смени паролата')));
 
     const backupsBox = el('div', { class: 'list' }, el('p', { class: 'muted' }, 'Зареждане…'));
+    const mcBox = el('div', { class: 'grid card-plain' }, el('p', { class: 'muted' }, 'Зареждане…'));
     app.replaceChildren(
+      el('h2', {}, 'Mailchimp'),
+      el('p', { class: 'muted' }, 'Хората, които свалят каталог и отметнат съгласие, влизат в тази аудитория с етикета на каталога. Ключът се пази само на сървъра.'),
+      mcBox,
       el('h2', {}, 'Предишни версии'),
       el('p', { class: 'muted' }, 'При всеки запис пазим копие на предишното съдържание (последните 40). Зареждането на стара версия не я публикува, докато не натиснете „Запази промените“.'),
       backupsBox,
       el('h2', {}, 'Смяна на парола'), passForm);
+    renderMailchimp(mcBox);
     try {
       const { backups } = await api('backups');
       backupsBox.replaceChildren(...(backups.length ? backups.map(name => {

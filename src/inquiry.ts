@@ -1,3 +1,5 @@
+import { getUtm } from './leads';
+
 export interface InquiryPayload {
   source: string;
   name: string;
@@ -10,6 +12,13 @@ export interface InquiryPayload {
   message?: string;
   product?: string;
   configuration?: string;
+  quantity?: string;
+  deliveryDate?: string;
+  lookingFor?: string;
+  catalog?: string;
+  occasionSlug?: string;
+  consent?: boolean;
+  confirm?: boolean; // send a confirmation e-mail to the client
   website?: string; // honeypot – must stay empty
 }
 
@@ -18,7 +27,7 @@ export async function submitInquiry(data: InquiryPayload): Promise<{ ok: boolean
     const res = await fetch('/api/inquiry.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...data, page: window.location.pathname }),
+      body: JSON.stringify({ ...data, page: window.location.pathname, ...getUtm() }),
     });
     const json = await res.json().catch(() => null);
     if (res.ok && json?.ok) return { ok: true };

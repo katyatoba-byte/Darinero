@@ -24,8 +24,12 @@ if ($type === 'llms') {
     $out .= '> ' . ($s['siteDescription'] ?? '') . "\n\n";
     $out .= "DARINERO (Даринеро ООД) е партньор за корпоративни подаръци в България: концепция, подбор на продукти, персонализация с лого, опаковане и доставка до ключ. Офис и склад: " . ($s['address'] ?? '') . ". Контакт: " . ($s['email'] ?? '') . ", " . ($s['phone'] ?? '') . ".\n\n";
     $out .= "## Основни страници\n\n";
-    foreach (['/categories' => 'Каталог', '/services' => 'Услуги', '/case-studies' => 'Case Studies – реализирани проекти', '/concepts' => 'Концепции', '/contact' => 'Контакт и запитване'] as $u => $l) {
+    foreach (['/katalozi' => 'Каталози (PDF) с корпоративни подаръци', '/categories' => 'Продукти', '/services' => 'Услуги', '/case-studies' => 'Case Studies – реализирани проекти', '/concepts' => 'Концепции', '/contact' => 'Контакт и запитване'] as $u => $l) {
         $out .= "- [$l](" . SITE_URL . "$u)\n";
+    }
+    foreach ($content['themePages'] ?? [] as $tp) {
+        if (!empty($tp['hidden']) || empty($tp['id'])) continue;
+        $out .= '- [' . ($tp['seoTitle'] ?? $tp['name'] ?? $tp['id']) . '](' . SITE_URL . '/' . $tp['id'] . '): ' . trim_text((string) ($tp['metaDescription'] ?? ''), 240) . "\n";
     }
     $out .= "\n## Каталог\n\n";
     foreach ($content['categories'] ?? [] as $cat) {

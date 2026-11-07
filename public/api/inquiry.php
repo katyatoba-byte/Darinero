@@ -13,7 +13,22 @@ if (!is_array($input)) {
 
 // Honeypot: bots fill every field. Pretend success, store nothing.
 if (!empty($input['website'])) {
-    json_response(['ok' => true]);
+    // Mailchimp: subscribe only with consent; always tag existing contacts with "zapitvane"
+// so the catalogue e-mail sequence stops for people who already sent an inquiry.
+$occasionTag = !empty($input['occasionSlug']) ? 'povod-' . preg_replace('/[^a-z0-9-]/', '', strtolower((string) $input['occasionSlug'])) : '';
+@mailchimp_sync($data['email'], $data['name'], $data['company'], array_filter(['zapitvane', $occasionTag, $consent ? 'izt-site' : '']), $consent);
+
+// Confirmation to the client (offer form only).
+if (!empty($input['confirm'])) {
+    $phone = $content['settings']['phone'] ?? '0899 498 699';
+    $greeting = 'Здравейте' . ($data['name'] !== '' ? ', ' . $data['name'] : '') . '!';
+    $about = $data['occasion'] !== '' ? ' за ' . $data['occasion'] : '';
+    send_plain_mail($data['email'], 'Получихме вашето запитване – DARINERO',
+        $greeting . "\n\nПолучихме запитването ви" . $about . ". Ще се свържем с вас с конкретно предложение до 1 работен ден.\n\nАко е спешно: " . $phone . "\n\n— Екипът на DARINERO\nhttps://darinero.com",
+        $to);
+}
+
+json_response(['ok' => true]);
 }
 
 $fields = [
@@ -25,10 +40,17 @@ $fields = [
     'employees'     => ['Брой служители', 40],
     'occasion'      => ['Повод', 160],
     'budget'        => ['Бюджет', 120],
+    'quantity'      => ['Брой подаръци', 40],
+    'deliveryDate'  => ['Желана дата за доставка', 40],
+    'lookingFor'    => ['Какво търсят', 80],
+    'catalog'       => ['Каталог', 200],
     'product'       => ['Продукт', 200],
     'configuration' => ['Конфигурация', 2000],
     'message'       => ['Съобщение', 5000],
     'page'          => ['Страница', 200],
+    'utm_source'    => ['UTM източник', 100],
+    'utm_medium'    => ['UTM канал', 100],
+    'utm_campaign'  => ['UTM кампания', 100],
 ];
 $data = [];
 foreach ($fields as $key => [, $max]) {
@@ -45,7 +67,8 @@ if (!rate_limit('inquiry', 6, 600)) {
 
 ensure_data_dirs();
 
-$record = ['id' => bin2hex(random_bytes(6)), 'date' => date('c'), 'ip' => client_ip(), 'handled' => false] + $data;
+$consent = !empty($input['consent']);
+$record = ['id' => bin2hex(random_bytes(6)), 'date' => date('c'), 'ip' => client_ip(), 'handled' => false, 'status' => 'Ново', 'consent' => $consent] + $data;
 
 // Store first, so nothing is lost even if e-mail delivery fails.
 $file = DATA_DIR . '/inquiries.json';
@@ -97,6 +120,21 @@ $sent = @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, implode
 
 if (!$sent) {
     error_log('DARINERO inquiry mail() failed for ' . $record['id']);
+}
+
+// Mailchimp: subscribe only with consent; always tag existing contacts with "zapitvane"
+// so the catalogue e-mail sequence stops for people who already sent an inquiry.
+$occasionTag = !empty($input['occasionSlug']) ? 'povod-' . preg_replace('/[^a-z0-9-]/', '', strtolower((string) $input['occasionSlug'])) : '';
+@mailchimp_sync($data['email'], $data['name'], $data['company'], array_filter(['zapitvane', $occasionTag, $consent ? 'izt-site' : '']), $consent);
+
+// Confirmation to the client (offer form only).
+if (!empty($input['confirm'])) {
+    $phone = $content['settings']['phone'] ?? '0899 498 699';
+    $greeting = 'Здравейте' . ($data['name'] !== '' ? ', ' . $data['name'] : '') . '!';
+    $about = $data['occasion'] !== '' ? ' за ' . $data['occasion'] : '';
+    send_plain_mail($data['email'], 'Получихме вашето запитване – DARINERO',
+        $greeting . "\n\nПолучихме запитването ви" . $about . ". Ще се свържем с вас с конкретно предложение до 1 работен ден.\n\nАко е спешно: " . $phone . "\n\n— Екипът на DARINERO\nhttps://darinero.com",
+        $to);
 }
 
 json_response(['ok' => true]);
